@@ -44,6 +44,10 @@ if file_list:
         date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
         date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
+        # 显示柱形图
+        st.subheader(f"班级排名 - {date}")
+        st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
+
         # 构建每个班级的信息表格
         table_data = []
 
@@ -75,7 +79,6 @@ if file_list:
             })
 
         # 显示表格
-        st.subheader(f"班级排名 - {date}")
         st.table(table_data)
 
 else:
