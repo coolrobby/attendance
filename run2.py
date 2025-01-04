@@ -44,11 +44,9 @@ if file_list:
         date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
         date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-        # 使用st.bar_chart显示柱形图
-        st.subheader(f"班级排名 - {date}")
-        st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
+        # 构建每个班级的信息表格
+        table_data = []
 
-        # 显示每个班级的出勤数据
         for index, row in date_data.iterrows():
             # 获取该班级的总人数（只在该日期和班级下）
             total_students = len(df_filtered[(df_filtered['授课班级'] == row['授课班级']) & (df_filtered['时间'] == date)])
@@ -59,24 +57,26 @@ if file_list:
             # 计算出勤率
             attendance_rate = (present_students / total_students) * 100
 
-            # 显示相关信息
-            st.write(f"班级: {row['授课班级']}")
-            st.write(f"总人数: {total_students}")
-            st.write(f"出勤人数: {present_students}")
-            st.write(f"出勤率: {attendance_rate:.2f}%")
-
-            # 显示缺勤学生姓名
+            # 查找缺勤学生
             absent_students = df_filtered[(df_filtered['授课班级'] == row['授课班级']) & 
                                           (df_filtered['时间'] == date) & 
                                           (df_filtered['出勤状态'] == '缺勤')]
 
-            if not absent_students.empty:
-                absent_names = absent_students['姓名'].tolist()
-                st.write("缺勤学生: " + ", ".join(absent_names))
-            else:
-                st.write("没有缺勤学生。")
+            absent_names = absent_students['姓名'].tolist()
+            absent_names_str = ", ".join(absent_names) if absent_names else "没有缺勤学生"
 
-            st.write("---")
+            # 将每个班级的信息添加到表格数据
+            table_data.append({
+                "班级": row['授课班级'],
+                "总人数": total_students,
+                "出勤人数": present_students,
+                "出勤率": f"{attendance_rate:.2f}%",
+                "缺勤学生": absent_names_str
+            })
+
+        # 显示表格
+        st.subheader(f"班级排名 - {date}")
+        st.table(table_data)
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
