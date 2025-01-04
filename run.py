@@ -9,12 +9,6 @@ st.title("出勤分析")
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
 
 # 初始化 session_state
-if 'show_ranking' not in st.session_state:
-    st.session_state.show_ranking = False
-
-if 'show_report2' not in st.session_state:
-    st.session_state.show_report2 = False
-
 if 'show_filters' not in st.session_state:
     st.session_state.show_filters = True
 
@@ -52,22 +46,6 @@ if file_list:
         selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
         selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
 
-        # 添加报表2按钮
-        show_report2 = st.button("报表2")  # 新增按钮报表2
-
-    # 如果点击了“报表2”按钮，显示出勤率表格
-    if show_report2:
-        st.session_state.show_report2 = True
-        st.session_state.show_ranking = False
-        st.session_state.show_filters = False
-
-    # 如果点击了其他按钮或无按钮，显示筛选器和预览数据
-    if not show_report2:
-        st.session_state.show_report2 = False
-        st.session_state.show_ranking = False
-        st.session_state.show_filters = True
-
-    # 显示筛选器（如果需要）
     if st.session_state.show_filters:
         # 根据选择的筛选条件进行过滤
         if selected_department != "全部":
@@ -133,41 +111,6 @@ if file_list:
                 st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
         else:
             st.error("数据中没有 '签到状态' 字段。")
-
-    # 如果点击了“报表2”按钮，生成四张表格按不同维度排序
-    if st.session_state.show_report2:
-        # 将签到状态“已签”和“教师代签”视为出勤，其他为缺勤
-        df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
-
-        # 只考虑不是2000-01-01的时间
-        df_filtered = df[df['时间'] != pd.to_datetime('2000-01-01')]
-
-        # 计算每个班级在每个日期的出勤率
-        df_filtered['出勤率'] = df_filtered.groupby(['时间', '授课班级'])['出勤状态'].transform(lambda x: (x == '出勤').sum() / len(x) * 100)
-
-        # 按照“授课班级”排序并显示出勤率
-        st.subheader("按授课班级排序的出勤率")
-        attendance_by_class = df_filtered[['时间', '授课班级', '出勤率']].drop_duplicates()
-        attendance_by_class = attendance_by_class.sort_values(by=['时间', '出勤率'], ascending=[True, False])
-        st.dataframe(attendance_by_class)
-
-        # 按照“专业”排序并显示出勤率
-        st.subheader("按专业排序的出勤率")
-        attendance_by_major = df_filtered[['时间', '专业', '出勤率']].drop_duplicates()
-        attendance_by_major = attendance_by_major.sort_values(by=['时间', '出勤率'], ascending=[True, False])
-        st.dataframe(attendance_by_major)
-
-        # 按照“教师”排序并显示出勤率
-        st.subheader("按教师排序的出勤率")
-        attendance_by_teacher = df_filtered[['时间', '教师', '出勤率']].drop_duplicates()
-        attendance_by_teacher = attendance_by_teacher.sort_values(by=['时间', '出勤率'], ascending=[True, False])
-        st.dataframe(attendance_by_teacher)
-
-        # 按照“院系”排序并显示出勤率
-        st.subheader("按院系排序的出勤率")
-        attendance_by_department = df_filtered[['时间', '院系', '出勤率']].drop_duplicates()
-        attendance_by_department = attendance_by_department.sort_values(by=['时间', '出勤率'], ascending=[True, False])
-        st.dataframe(attendance_by_department)
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
