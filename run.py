@@ -133,22 +133,23 @@ if file_list:
         # 将签到状态“已签”和“教师代签”视为出勤，其他为缺勤
         df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
 
-        # 按日期和班级进行分组，并计算每个班级的出勤人数
-        attendance_by_class_date = df.groupby(['时间', '行政班级'])['出勤状态'].apply(lambda x: (x == '出勤').sum()).reset_index()
+        # 按日期和授课班级进行分组，并计算每个授课班级的出勤人数
+        attendance_by_class_date = df.groupby(['时间', '授课班级'])['出勤状态'].apply(lambda x: (x == '出勤').sum()).reset_index()
 
         # 对每个日期进行排序，计算每个班级的出勤排名
         attendance_by_class_date['排名'] = attendance_by_class_date.groupby('时间')['出勤状态'].rank(ascending=False, method='min')
 
-        # 获取最新日期的数据
-        latest_date = attendance_by_class_date['时间'].max()
-        latest_data = attendance_by_class_date[attendance_by_class_date['时间'] == latest_date]
+        # 获取所有日期的列表
+        all_dates = attendance_by_class_date['时间'].unique()
 
-        # 对班级按出勤人数进行降序排序
-        latest_data = latest_data.sort_values(by='出勤状态', ascending=False)
+        # 为每个日期显示排名
+        for date in all_dates:
+            date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
+            date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-        # 使用柱形图显示排名
-        st.subheader(f"班级排名 - {latest_date}")
-        st.bar_chart(latest_data.set_index('行政班级')['出勤状态'])
+            # 使用柱形图显示排名
+            st.subheader(f"班级排名 - {date}")
+            st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
