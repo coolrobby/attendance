@@ -25,8 +25,8 @@ if file_list:
     # 清理列名，去除可能的空格
     df.columns = df.columns.str.strip()
 
-    # 用默认日期填充空值（2000年1月1日）
-    df['时间'] = df['时间'].fillna(pd.to_datetime('2000-01-01'))
+    # 去除含有空值的行，防止筛选错误
+    df = df.dropna(subset=['院系', '专业', '行政班级', '时间', '课程', '授课班级', '教师', '签到状态'])
 
     # 提取筛选条件的独特值，并去重
     departments = df['院系'].unique()
