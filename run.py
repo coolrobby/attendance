@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
+import matplotlib.pyplot as plt
 
 # 设置页面标题
 st.title("出勤分析")
@@ -147,28 +148,26 @@ if file_list:
             date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
             date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-            # 使用柱形图显示排名
-            st.subheader(f"班级排名 - {date}")
-            st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
+            # 使用matplotlib绘制柱形图
+            fig, ax = plt.subplots(figsize=(10, 6))
 
-            # 让用户选择班级查看详细信息
-            selected_class_for_details = st.selectbox(
-                f"选择班级查看详细信息 - {date}", 
-                date_data['授课班级'].unique(),
-                key=f"{date}_class_selectbox"  # 给每个日期的 selectbox 添加唯一的 key
-            )
+            # 绘制柱形图
+            ax.barh(date_data['授课班级'], date_data['出勤状态'], color='skyblue')
 
-            # 获取所选班级的数据
-            selected_class_data = date_data[date_data['授课班级'] == selected_class_for_details]
+            # 为每个柱形图上的柱子添加文本（显示“总人数”，“出勤人数”，“出勤率”）
+            for i, (班级, 出勤人数) in enumerate(zip(date_data['授课班级'], date_data['出勤状态'])):
+                total_students = len(df[df['授课班级'] == 班级])
+                attendance_rate = (出勤人数 / total_students) * 100
+                ax.text(出勤人数 + 0.2, i, f"总人数: {total_students}\n出勤人数: {出勤人数}\n出勤率: {attendance_rate:.2f}%", 
+                        va='center', fontsize=10)
 
-            # 显示该班级的详细出勤数据
-            total_students = selected_class_data['出勤状态'].sum() + (len(df[df['授课班级'] == selected_class_for_details]) - selected_class_data['出勤状态'].sum())
-            present_students = selected_class_data['出勤状态'].sum()
-            attendance_rate = (present_students / total_students) * 100
+            # 设置标题和标签
+            ax.set_title(f"班级排名 - {date}", fontsize=14)
+            ax.set_xlabel('出勤人数', fontsize=12)
+            ax.set_ylabel('授课班级', fontsize=12)
 
-            st.write(f"总人数: {total_students}")
-            st.write(f"出勤人数: {present_students}")
-            st.write(f"出勤率: {attendance_rate:.2f}%")
+            # 显示图表
+            st.pyplot(fig)
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
