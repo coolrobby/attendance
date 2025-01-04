@@ -8,6 +8,13 @@ st.title("出勤分析")
 # 自动读取当前目录下所有的xlsx文件
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
 
+# 初始化 session_state
+if 'show_ranking' not in st.session_state:
+    st.session_state.show_ranking = False
+
+if 'show_filters' not in st.session_state:
+    st.session_state.show_filters = True
+
 if file_list:
     # 确保文件名为出勤.xlsx
     selected_file = '出勤.xlsx'  # 假设文件名为出勤.xlsx
@@ -45,73 +52,84 @@ if file_list:
         # 添加班级排名按钮
         show_ranking = st.button("班级排名")
 
-    # 根据选择的筛选条件进行过滤
-    if selected_department != "全部":
-        df = df[df['院系'] == selected_department]
-    if selected_major != "全部":
-        df = df[df['专业'] == selected_major]
-    if selected_class != "全部":
-        df = df[df['行政班级'] == selected_class]
-    if selected_time != "全部":
-        df = df[df['时间'] == selected_time]
-    if selected_course != "全部":
-        df = df[df['课程'] == selected_course]
-    if selected_taught_class != "全部":
-        df = df[df['授课班级'] == selected_taught_class]
-    if selected_teacher != "全部":
-        df = df[df['教师'] == selected_teacher]
-
-    # 显示数据预览
-    st.write("数据预览:")
-    st.dataframe(df)
-
-    # 显示筛选条件
-    st.subheader("当前筛选条件:")
-    filter_conditions = []
-
-    if selected_department != "全部":
-        filter_conditions.append(f"院系: {selected_department}")
-    if selected_major != "全部":
-        filter_conditions.append(f"专业: {selected_major}")
-    if selected_class != "全部":
-        filter_conditions.append(f"行政班级: {selected_class}")
-    if selected_time != "全部":
-        filter_conditions.append(f"时间: {selected_time}")
-    if selected_course != "全部":
-        filter_conditions.append(f"课程: {selected_course}")
-    if selected_taught_class != "全部":
-        filter_conditions.append(f"授课班级: {selected_taught_class}")
-    if selected_teacher != "全部":
-        filter_conditions.append(f"教师: {selected_teacher}")
-
-    # 如果有筛选条件，显示它们，每个条件独占一行
-    if filter_conditions:
-        for condition in filter_conditions:
-            st.markdown(f"- {condition}")
+    # 处理按钮点击
+    if show_ranking:
+        # 切换到班级排名显示
+        st.session_state.show_ranking = True
+        st.session_state.show_filters = False
     else:
-        st.write("未选择任何筛选条件。")
+        # 默认显示筛选器
+        st.session_state.show_ranking = False
+        st.session_state.show_filters = True
 
-    # 统计“签到状态”字段的不同值所占百分比
-    if '签到状态' in df.columns:
-        attendance_counts = df['签到状态'].value_counts()
-        total_count = attendance_counts.sum()
-        attendance_percentage = (attendance_counts / total_count) * 100
+    if st.session_state.show_filters:
+        # 根据选择的筛选条件进行过滤
+        if selected_department != "全部":
+            df = df[df['院系'] == selected_department]
+        if selected_major != "全部":
+            df = df[df['专业'] == selected_major]
+        if selected_class != "全部":
+            df = df[df['行政班级'] == selected_class]
+        if selected_time != "全部":
+            df = df[df['时间'] == selected_time]
+        if selected_course != "全部":
+            df = df[df['课程'] == selected_course]
+        if selected_taught_class != "全部":
+            df = df[df['授课班级'] == selected_taught_class]
+        if selected_teacher != "全部":
+            df = df[df['教师'] == selected_teacher]
 
-        # 显示统计结果
-        st.subheader("签到状态的百分比统计:")
-        
-        # 显示总人数
-        st.write(f"总人数: {total_count}")
+        # 显示数据预览
+        st.write("数据预览:")
+        st.dataframe(df)
 
-        # 显示各个值的人数和百分比
-        for status, count in attendance_counts.items():
-            percentage = attendance_percentage[status]
-            st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
-    else:
-        st.error("数据中没有 '签到状态' 字段。")
+        # 显示筛选条件
+        st.subheader("当前筛选条件:")
+        filter_conditions = []
+
+        if selected_department != "全部":
+            filter_conditions.append(f"院系: {selected_department}")
+        if selected_major != "全部":
+            filter_conditions.append(f"专业: {selected_major}")
+        if selected_class != "全部":
+            filter_conditions.append(f"行政班级: {selected_class}")
+        if selected_time != "全部":
+            filter_conditions.append(f"时间: {selected_time}")
+        if selected_course != "全部":
+            filter_conditions.append(f"课程: {selected_course}")
+        if selected_taught_class != "全部":
+            filter_conditions.append(f"授课班级: {selected_taught_class}")
+        if selected_teacher != "全部":
+            filter_conditions.append(f"教师: {selected_teacher}")
+
+        # 如果有筛选条件，显示它们，每个条件独占一行
+        if filter_conditions:
+            for condition in filter_conditions:
+                st.markdown(f"- {condition}")
+        else:
+            st.write("未选择任何筛选条件。")
+
+        # 统计“签到状态”字段的不同值所占百分比
+        if '签到状态' in df.columns:
+            attendance_counts = df['签到状态'].value_counts()
+            total_count = attendance_counts.sum()
+            attendance_percentage = (attendance_counts / total_count) * 100
+
+            # 显示统计结果
+            st.subheader("签到状态的百分比统计:")
+            
+            # 显示总人数
+            st.write(f"总人数: {total_count}")
+
+            # 显示各个值的人数和百分比
+            for status, count in attendance_counts.items():
+                percentage = attendance_percentage[status]
+                st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
+        else:
+            st.error("数据中没有 '签到状态' 字段。")
 
     # 如果点击了“班级排名”按钮，显示班级排名柱形图
-    if show_ranking:
+    if st.session_state.show_ranking:
         # 将签到状态“已签”和“教师代签”视为出勤，其他为缺勤
         df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
 
@@ -125,7 +143,7 @@ if file_list:
         latest_date = attendance_by_class_date['时间'].max()
         latest_data = attendance_by_class_date[attendance_by_class_date['时间'] == latest_date]
 
-        # 以班级出勤人数为依据，按降序排序
+        # 对班级按出勤人数进行降序排序
         latest_data = latest_data.sort_values(by='出勤状态', ascending=False)
 
         # 使用柱形图显示排名
