@@ -31,10 +31,17 @@ if file_list:
     df_filtered = df[df['时间'] != pd.to_datetime('2000-01-01')]
 
     # 按日期和授课班级进行分组，并计算每个授课班级的出勤人数
-    attendance_by_class_date = df_filtered.groupby(['时间', '授课班级'])['出勤状态'].apply(lambda x: (x == '出勤').sum()).reset_index()
+    attendance_by_class_date = df_filtered.groupby(['时间', '授课班级', '教师'])['出勤状态'].apply(lambda x: (x == '出勤').sum()).reset_index()
 
-    # 对每个日期进行排序，计算每个班级的出勤排名
-    attendance_by_class_date['排名'] = attendance_by_class_date.groupby('时间')['出勤状态'].rank(ascending=False, method='min')
+    # 计算总人数
+    attendance_by_class_date['总人数'] = attendance_by_class_date.apply(
+        lambda row: len(df_filtered[(df_filtered['授课班级'] == row['授课班级']) & (df_filtered['时间'] == row['时间'])]), axis=1)
+
+    # 计算出勤率
+    attendance_by_class_date['出勤率'] = (attendance_by_class_date['出勤状态'] / attendance_by_class_date['总人数']) * 100
+
+    # 对每个日期进行排序，计算每个班级的出勤排名（按出勤率降序排列）
+    attendance_by_class_date = attendance_by_class_date.sort_values(by='出勤率', ascending=False)
 
     # 获取所有日期的列表
     all_dates = attendance_by_class_date['时间'].unique()
@@ -42,25 +49,15 @@ if file_list:
     # 为每个日期显示排名
     for date in all_dates:
         date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
-        date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
         # 显示柱形图
         st.subheader(f"班级排名 - {date}")
-        st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
+        st.bar_chart(date_data.set_index('授课班级')['出勤率'])
 
         # 构建每个班级的信息表格
         table_data = []
 
         for index, row in date_data.iterrows():
-            # 获取该班级的总人数（只在该日期和班级下）
-            total_students = len(df_filtered[(df_filtered['授课班级'] == row['授课班级']) & (df_filtered['时间'] == date)])
-
-            # 计算该班级的出勤人数
-            present_students = row['出勤状态']
-
-            # 计算出勤率
-            attendance_rate = (present_students / total_students) * 100
-
             # 查找缺勤学生
             absent_students = df_filtered[(df_filtered['授课班级'] == row['授课班级']) & 
                                           (df_filtered['时间'] == date) & 
@@ -72,9 +69,10 @@ if file_list:
             # 将每个班级的信息添加到表格数据
             table_data.append({
                 "班级": row['授课班级'],
-                "总人数": total_students,
-                "出勤人数": present_students,
-                "出勤率": f"{attendance_rate:.2f}%",
+                "教师": row['教师'],
+                "总人数": row['总人数'],
+                "出勤人数": row['出勤状态'],
+                "出勤率": f"{row['出勤率']:.2f}%",
                 "缺勤学生": absent_names_str
             })
 
