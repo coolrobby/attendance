@@ -42,6 +42,9 @@ if file_list:
         selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
         selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
 
+        # 添加班级排名按钮
+        show_ranking = st.button("班级排名")
+
     # 根据选择的筛选条件进行过滤
     if selected_department != "全部":
         df = df[df['院系'] == selected_department]
@@ -106,6 +109,28 @@ if file_list:
             st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
     else:
         st.error("数据中没有 '签到状态' 字段。")
+
+    # 如果点击了“班级排名”按钮，显示班级排名柱形图
+    if show_ranking:
+        # 将签到状态“已签”和“教师代签”视为出勤，其他为缺勤
+        df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
+
+        # 按日期和班级进行分组，并计算每个班级的出勤人数
+        attendance_by_class_date = df.groupby(['时间', '行政班级'])['出勤状态'].apply(lambda x: (x == '出勤').sum()).reset_index()
+
+        # 对每个日期进行排序，计算每个班级的出勤排名
+        attendance_by_class_date['排名'] = attendance_by_class_date.groupby('时间')['出勤状态'].rank(ascending=False, method='min')
+
+        # 获取最新日期的数据
+        latest_date = attendance_by_class_date['时间'].max()
+        latest_data = attendance_by_class_date[attendance_by_class_date['时间'] == latest_date]
+
+        # 以班级出勤人数为依据，按降序排序
+        latest_data = latest_data.sort_values(by='出勤状态', ascending=False)
+
+        # 使用柱形图显示排名
+        st.subheader(f"班级排名 - {latest_date}")
+        st.bar_chart(latest_data.set_index('行政班级')['出勤状态'])
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
