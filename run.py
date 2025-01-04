@@ -170,6 +170,18 @@ if file_list:
                 st.write(f"总人数: {total_students}")
                 st.write(f"出勤人数: {present_students}")
                 st.write(f"出勤率: {attendance_rate:.2f}%")
+
+                # 显示缺勤学生姓名
+                absent_students = df_filtered[(df_filtered['授课班级'] == row['授课班级']) & 
+                                              (df_filtered['时间'] == date) & 
+                                              (df_filtered['出勤状态'] == '缺勤')]
+
+                if not absent_students.empty:
+                    st.write("缺勤学生:")
+                    st.write(absent_students['姓名'].tolist())
+                else:
+                    st.write("没有缺勤学生。")
+
                 st.write("---")
 
 else:
