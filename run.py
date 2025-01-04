@@ -81,5 +81,30 @@ if file_list:
     else:
         st.error("数据中没有 '签到状态' 字段。")
 
+    # 显示筛选条件
+    st.subheader("当前筛选条件:")
+    filter_conditions = []
+
+    if selected_department != "全部":
+        filter_conditions.append(f"院系: {selected_department}")
+    if selected_major != "全部":
+        filter_conditions.append(f"专业: {selected_major}")
+    if selected_class != "全部":
+        filter_conditions.append(f"行政班级: {selected_class}")
+    if selected_time != "全部":
+        filter_conditions.append(f"时间: {selected_time}")
+    if selected_course != "全部":
+        filter_conditions.append(f"课程: {selected_course}")
+    if selected_taught_class != "全部":
+        filter_conditions.append(f"授课班级: {selected_taught_class}")
+    if selected_teacher != "全部":
+        filter_conditions.append(f"教师: {selected_teacher}")
+
+    # 如果有筛选条件，显示它们
+    if filter_conditions:
+        st.write("\n".join(filter_conditions))
+    else:
+        st.write("未选择任何筛选条件。")
+
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
