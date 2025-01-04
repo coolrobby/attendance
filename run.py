@@ -177,8 +177,8 @@ if file_list:
                                               (df_filtered['出勤状态'] == '缺勤')]
 
                 if not absent_students.empty:
-                    st.write("缺勤学生:")
-                    st.write(absent_students['姓名'].tolist())
+                    absent_names = absent_students['姓名'].tolist()
+                    st.write("缺勤学生: " + ", ".join(absent_names))
                 else:
                     st.write("没有缺勤学生。")
 
