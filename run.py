@@ -1,20 +1,12 @@
 import pandas as pd
 import streamlit as st
 import os
-import plotly.express as px
 
 # 设置页面标题
 st.title("出勤分析")
 
 # 自动读取当前目录下所有的xlsx文件
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
-
-# 初始化 session_state
-if 'show_ranking' not in st.session_state:
-    st.session_state.show_ranking = False
-
-if 'show_filters' not in st.session_state:
-    st.session_state.show_filters = True
 
 if file_list:
     # 确保文件名为出勤.xlsx
@@ -50,133 +42,70 @@ if file_list:
         selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
         selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
 
-        # 添加班级排名按钮
-        show_ranking = st.button("班级排名")
+    # 根据选择的筛选条件进行过滤
+    if selected_department != "全部":
+        df = df[df['院系'] == selected_department]
+    if selected_major != "全部":
+        df = df[df['专业'] == selected_major]
+    if selected_class != "全部":
+        df = df[df['行政班级'] == selected_class]
+    if selected_time != "全部":
+        df = df[df['时间'] == selected_time]
+    if selected_course != "全部":
+        df = df[df['课程'] == selected_course]
+    if selected_taught_class != "全部":
+        df = df[df['授课班级'] == selected_taught_class]
+    if selected_teacher != "全部":
+        df = df[df['教师'] == selected_teacher]
 
-    # 处理按钮点击
-    if show_ranking:
-        # 切换到班级排名显示
-        st.session_state.show_ranking = True
-        st.session_state.show_filters = False
+    # 显示数据预览
+    st.write("数据预览:")
+    st.dataframe(df)
+
+    # 显示筛选条件
+    st.subheader("当前筛选条件:")
+    filter_conditions = []
+
+    if selected_department != "全部":
+        filter_conditions.append(f"院系: {selected_department}")
+    if selected_major != "全部":
+        filter_conditions.append(f"专业: {selected_major}")
+    if selected_class != "全部":
+        filter_conditions.append(f"行政班级: {selected_class}")
+    if selected_time != "全部":
+        filter_conditions.append(f"时间: {selected_time}")
+    if selected_course != "全部":
+        filter_conditions.append(f"课程: {selected_course}")
+    if selected_taught_class != "全部":
+        filter_conditions.append(f"授课班级: {selected_taught_class}")
+    if selected_teacher != "全部":
+        filter_conditions.append(f"教师: {selected_teacher}")
+
+    # 如果有筛选条件，显示它们，每个条件独占一行
+    if filter_conditions:
+        for condition in filter_conditions:
+            st.markdown(f"- {condition}")
     else:
-        # 默认显示筛选器
-        st.session_state.show_ranking = False
-        st.session_state.show_filters = True
+        st.write("未选择任何筛选条件。")
 
-    if st.session_state.show_filters:
-        # 根据选择的筛选条件进行过滤
-        if selected_department != "全部":
-            df = df[df['院系'] == selected_department]
-        if selected_major != "全部":
-            df = df[df['专业'] == selected_major]
-        if selected_class != "全部":
-            df = df[df['行政班级'] == selected_class]
-        if selected_time != "全部":
-            df = df[df['时间'] == selected_time]
-        if selected_course != "全部":
-            df = df[df['课程'] == selected_course]
-        if selected_taught_class != "全部":
-            df = df[df['授课班级'] == selected_taught_class]
-        if selected_teacher != "全部":
-            df = df[df['教师'] == selected_teacher]
+    # 统计“签到状态”字段的不同值所占百分比
+    if '签到状态' in df.columns:
+        attendance_counts = df['签到状态'].value_counts()
+        total_count = attendance_counts.sum()
+        attendance_percentage = (attendance_counts / total_count) * 100
 
-        # 显示数据预览
-        st.write("数据预览:")
-        st.dataframe(df)
+        # 显示统计结果
+        st.subheader("签到状态的百分比统计:")
+        
+        # 显示总人数
+        st.write(f"总人数: {total_count}")
 
-        # 显示筛选条件
-        st.subheader("当前筛选条件:")
-        filter_conditions = []
-
-        if selected_department != "全部":
-            filter_conditions.append(f"院系: {selected_department}")
-        if selected_major != "全部":
-            filter_conditions.append(f"专业: {selected_major}")
-        if selected_class != "全部":
-            filter_conditions.append(f"行政班级: {selected_class}")
-        if selected_time != "全部":
-            filter_conditions.append(f"时间: {selected_time}")
-        if selected_course != "全部":
-            filter_conditions.append(f"课程: {selected_course}")
-        if selected_taught_class != "全部":
-            filter_conditions.append(f"授课班级: {selected_taught_class}")
-        if selected_teacher != "全部":
-            filter_conditions.append(f"教师: {selected_teacher}")
-
-        # 如果有筛选条件，显示它们，每个条件独占一行
-        if filter_conditions:
-            for condition in filter_conditions:
-                st.markdown(f"- {condition}")
-        else:
-            st.write("未选择任何筛选条件。")
-
-        # 统计“签到状态”字段的不同值所占百分比
-        if '签到状态' in df.columns:
-            attendance_counts = df['签到状态'].value_counts()
-            total_count = attendance_counts.sum()
-            attendance_percentage = (attendance_counts / total_count) * 100
-
-            # 显示统计结果
-            st.subheader("签到状态的百分比统计:")
-            
-            # 显示总人数
-            st.write(f"总人数: {total_count}")
-
-            # 显示各个值的人数和百分比
-            for status, count in attendance_counts.items():
-                percentage = attendance_percentage[status]
-                st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
-        else:
-            st.error("数据中没有 '签到状态' 字段。")
-
-    # 如果点击了“班级排名”按钮，显示班级排名柱形图
-    if st.session_state.show_ranking:
-        # 将签到状态“已签”和“教师代签”视为出勤，其他为缺勤
-        df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
-
-        # 按日期和授课班级进行分组，并计算每个授课班级的出勤人数
-        attendance_by_class_date = df.groupby(['时间', '授课班级'])['出勤状态'].apply(lambda x: (x == '出勤').sum()).reset_index()
-
-        # 对每个日期进行排序，计算每个班级的出勤排名
-        attendance_by_class_date['排名'] = attendance_by_class_date.groupby('时间')['出勤状态'].rank(ascending=False, method='min')
-
-        # 获取所有日期的列表
-        all_dates = attendance_by_class_date['时间'].unique()
-
-        # 为每个日期显示排名
-        for date in all_dates:
-            date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
-            date_data = date_data.sort_values(by='出勤状态', ascending=False)
-
-            # 使用 Plotly 生成柱形图
-            st.subheader(f"班级排名 - {date}")
-            fig = px.bar(
-                date_data, 
-                x='授课班级', 
-                y='出勤状态',
-                title=f"出勤情况 - {date}",
-                labels={'授课班级': '班级', '出勤状态': '出勤人数'},
-                hover_data={'授课班级': True, '出勤状态': True, '排名': True}
-            )
-
-            # 显示 Plotly 图表
-            st.plotly_chart(fig)
-
-            # 处理柱形图的点击事件显示班级详情
-            clicked_data = st.plotly_chart(fig, use_container_width=True, key=f"bar_{date}")
-            if clicked_data:
-                clicked_class = clicked_data['points'][0]['x']
-                selected_class_data = date_data[date_data['授课班级'] == clicked_class]
-
-                # 显示详细信息
-                total_students = len(df[df['授课班级'] == clicked_class])
-                present_students = selected_class_data['出勤状态'].sum()
-                attendance_rate = (present_students / total_students) * 100
-
-                st.write(f"班级: {clicked_class}")
-                st.write(f"总人数: {total_students}")
-                st.write(f"出勤人数: {present_students}")
-                st.write(f"出勤率: {attendance_rate:.2f}%")
+        # 显示各个值的人数和百分比
+        for status, count in attendance_counts.items():
+            percentage = attendance_percentage[status]
+            st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
+    else:
+        st.error("数据中没有 '签到状态' 字段。")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
