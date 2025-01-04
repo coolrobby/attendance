@@ -3,81 +3,66 @@ import streamlit as st
 import os
 
 # 设置页面标题
-st.title("学生考勤分析")
+st.title("出勤分析")
 
 # 自动读取当前目录下所有的xlsx文件
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
 
 if file_list:
-    # 列出上传的文件供用户选择
-    selected_file = st.selectbox("请选择考勤文件:", file_list)
-
-    # 读取选择的文件
+    # 确保文件名为出勤.xlsx
+    selected_file = '出勤.xlsx'  # 假设文件名为出勤.xlsx
+    
+    # 读取数据
     df = pd.read_excel(selected_file)
 
-    # 显示数据表格
+    # 显示数据预览
     st.write("数据预览:")
     st.dataframe(df)
 
-    # 确保列名正确，避免中文空格问题
+    # 清理列名，去除可能的空格
     df.columns = df.columns.str.strip()
 
-    # 提取教师和班级列
+    # 提取筛选条件的独特值
+    departments = df['院系'].unique()
+    majors = df['专业'].unique()
+    classes = df['行政班级'].unique()
+    times = df['时间'].unique()
+    courses = df['课程'].unique()
+    taught_classes = df['授课班级'].unique()
     teachers = df['教师'].unique()
-    classes = df['班级'].unique()
-    students = df['学生'].unique()
 
-    # 选择教师
+    # 筛选功能
+    selected_department = st.selectbox("选择院系:", ["全部"] + list(departments))
+    selected_major = st.selectbox("选择专业:", ["全部"] + list(majors))
+    selected_class = st.selectbox("选择行政班级:", ["全部"] + list(classes))
+    selected_time = st.selectbox("选择时间:", ["全部"] + list(times))
+    selected_course = st.selectbox("选择课程:", ["全部"] + list(courses))
+    selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
     selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
 
-    # 根据选择的教师过滤班级
-    if selected_teacher != "全部":
-        filtered_classes = df[df['教师'] == selected_teacher]['班级'].unique()
-    else:
-        filtered_classes = classes
-
-    # 选择班级
-    selected_class = st.selectbox("选择班级:", ["全部"] + list(filtered_classes))
-
-    # 选择特定的日期列
-    date_columns = [col for col in df.columns if col.startswith('日期')]
-    selected_date = st.selectbox("选择日期:", date_columns)
-
-    # 根据选择的教师和班级进行过滤
+    # 根据选择的筛选条件进行过滤
+    if selected_department != "全部":
+        df = df[df['院系'] == selected_department]
+    if selected_major != "全部":
+        df = df[df['专业'] == selected_major]
+    if selected_class != "全部":
+        df = df[df['行政班级'] == selected_class]
+    if selected_time != "全部":
+        df = df[df['时间'] == selected_time]
+    if selected_course != "全部":
+        df = df[df['课程'] == selected_course]
+    if selected_taught_class != "全部":
+        df = df[df['授课班级'] == selected_taught_class]
     if selected_teacher != "全部":
         df = df[df['教师'] == selected_teacher]
-    if selected_class != "全部":
-        df = df[df['班级'] == selected_class]
 
-    # -------------------------------
-    # 统计功能
-    # -------------------------------
-
-    # 1. 全部学生在特定日期的出勤情况
-    total_attendance = df[selected_date].value_counts().to_dict()
-    st.subheader(f"全部学生在 {selected_date} 的出勤情况:")
-    st.write(total_attendance)
-
-    # 2. 每个班级的出勤情况
-    if selected_class == "全部":
-        st.subheader(f"各班级在 {selected_date} 的出勤情况:")
-        class_attendance = df.groupby('班级')[selected_date].value_counts().unstack(fill_value=0)
-        st.dataframe(class_attendance)
-
-    # 3. 每个教师的出勤情况
-    if selected_teacher == "全部":
-        st.subheader(f"各教师在 {selected_date} 的出勤情况:")
-        teacher_attendance = df.groupby('教师')[selected_date].value_counts().unstack(fill_value=0)
-        st.dataframe(teacher_attendance)
-
-    # 4. 查询指定学生在所有日期的出勤情况
-    selected_student = st.selectbox("查询学生:", students)
-    if selected_student:
-        student_attendance = df[df['学生'] == selected_student].iloc[0, 3:].to_dict()  # 从日期列开始
-        st.subheader(f"{selected_student} 的所有日期出勤情况:")
-        st.write(student_attendance)
-
-    st.success("考勤统计完成！")
+    # 统计“签到状态”字段的不同值所占百分比
+    if '签到状态' in df.columns:
+        attendance_stats = df['签到状态'].value_counts(normalize=True) * 100
+        st.subheader("签到状态的百分比统计:")
+        st.write(attendance_stats)
+    else:
+        st.error("数据中没有 '签到状态' 字段。")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
