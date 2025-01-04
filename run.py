@@ -62,25 +62,6 @@ if file_list:
     st.write("数据预览:")
     st.dataframe(df)
 
-    # 统计“签到状态”字段的不同值所占百分比
-    if '签到状态' in df.columns:
-        attendance_counts = df['签到状态'].value_counts()
-        total_count = attendance_counts.sum()
-        attendance_percentage = (attendance_counts / total_count) * 100
-
-        # 显示统计结果
-        st.subheader("签到状态的百分比统计:")
-        
-        # 显示总人数
-        st.write(f"总人数: {total_count}")
-
-        # 显示各个值的人数和百分比
-        for status, count in attendance_counts.items():
-            percentage = attendance_percentage[status]
-            st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
-    else:
-        st.error("数据中没有 '签到状态' 字段。")
-
     # 显示筛选条件
     st.subheader("当前筛选条件:")
     filter_conditions = []
@@ -105,6 +86,25 @@ if file_list:
         st.write("\n".join(filter_conditions))
     else:
         st.write("未选择任何筛选条件。")
+
+    # 统计“签到状态”字段的不同值所占百分比
+    if '签到状态' in df.columns:
+        attendance_counts = df['签到状态'].value_counts()
+        total_count = attendance_counts.sum()
+        attendance_percentage = (attendance_counts / total_count) * 100
+
+        # 显示统计结果
+        st.subheader("签到状态的百分比统计:")
+        
+        # 显示总人数
+        st.write(f"总人数: {total_count}")
+
+        # 显示各个值的人数和百分比
+        for status, count in attendance_counts.items():
+            percentage = attendance_percentage[status]
+            st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
+    else:
+        st.error("数据中没有 '签到状态' 字段。")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
