@@ -41,16 +41,16 @@ if file_list:
     attendance_by_class_date['出勤率'] = (attendance_by_class_date['出勤状态'] / attendance_by_class_date['总人数']) * 100
 
     # 对每个日期进行排序，计算每个班级的出勤排名（按出勤率降序排列）
-    attendance_by_class_date = attendance_by_class_date.sort_values(by='出勤率', ascending=False)
+    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by='出勤率', ascending=False)
 
     # 获取所有日期的列表
-    all_dates = attendance_by_class_date['时间'].unique()
+    all_dates = attendance_by_class_date_sorted['时间'].unique()
 
     # 为每个日期显示排名
     for date in all_dates:
-        date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
+        date_data = attendance_by_class_date_sorted[attendance_by_class_date_sorted['时间'] == date]
 
-        # 显示柱形图
+        # 显示柱形图，按照出勤率排序
         st.subheader(f"班级排名 - {date}")
         st.bar_chart(date_data.set_index('授课班级')['出勤率'])
 
