@@ -34,29 +34,51 @@ if file_list:
     with st.sidebar:
         st.header("筛选条件")
 
+        # 筛选院系
         selected_department = st.selectbox("选择院系:", ["全部"] + list(departments))
-        selected_major = st.selectbox("选择专业:", ["全部"] + list(majors))
-        selected_class = st.selectbox("选择行政班级:", ["全部"] + list(classes))
-        selected_time = st.selectbox("选择时间:", ["全部"] + list(times))
-        selected_course = st.selectbox("选择课程:", ["全部"] + list(courses))
-        selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
-        selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
+        if selected_department != "全部":
+            df = df[df['院系'] == selected_department]
 
-    # 根据选择的筛选条件进行过滤
-    if selected_department != "全部":
-        df = df[df['院系'] == selected_department]
-    if selected_major != "全部":
-        df = df[df['专业'] == selected_major]
-    if selected_class != "全部":
-        df = df[df['行政班级'] == selected_class]
-    if selected_time != "全部":
-        df = df[df['时间'] == selected_time]
-    if selected_course != "全部":
-        df = df[df['课程'] == selected_course]
-    if selected_taught_class != "全部":
-        df = df[df['授课班级'] == selected_taught_class]
-    if selected_teacher != "全部":
-        df = df[df['教师'] == selected_teacher]
+        # 筛选专业
+        selected_major = st.selectbox("选择专业:", ["全部"] + list(majors))
+        if selected_major != "全部":
+            df = df[df['专业'] == selected_major]
+
+        # 筛选行政班级
+        selected_class = st.selectbox("选择行政班级:", ["全部"] + list(classes))
+        if selected_class != "全部":
+            df = df[df['行政班级'] == selected_class]
+
+        # 筛选时间
+        selected_time = st.selectbox("选择时间:", ["全部"] + list(times))
+        if selected_time != "全部":
+            df = df[df['时间'] == selected_time]
+
+        # 筛选课程
+        selected_course = st.selectbox("选择课程:", ["全部"] + list(courses))
+        if selected_course != "全部":
+            df = df[df['课程'] == selected_course]
+
+        # 筛选授课班级
+        selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
+        if selected_taught_class != "全部":
+            df = df[df['授课班级'] == selected_taught_class]
+
+        # 筛选教师，并根据教师过滤班级
+        selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
+        if selected_teacher != "全部":
+            df = df[df['教师'] == selected_teacher]
+            # 根据选定教师，更新班级下拉框，显示该教师的班级
+            classes_for_teacher = df[df['教师'] == selected_teacher]['行政班级'].unique()
+        else:
+            classes_for_teacher = classes
+
+        # 根据选择的教师来筛选行政班级
+        selected_class = st.selectbox("选择行政班级:", ["全部"] + list(classes_for_teacher))
+
+        # 再次根据班级筛选数据
+        if selected_class != "全部":
+            df = df[df['行政班级'] == selected_class]
 
     # 显示数据预览
     st.write("数据预览:")
