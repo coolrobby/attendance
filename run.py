@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 # 设置页面标题
 st.title("出勤分析")
@@ -148,46 +148,35 @@ if file_list:
             date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
             date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-            # 使用matplotlib绘制柱形图并在每根柱上显示文本
-            fig, ax = plt.subplots()
-
-            # 绘制柱形图
-            ax.bar(date_data['授课班级'], date_data['出勤状态'], color='skyblue')
-
-            # 在每根柱子上添加文本标签
-            for i, row in date_data.iterrows():
-                total_students = len(df[df['授课班级'] == row['授课班级']])
-                present_students = row['出勤状态']
-                attendance_rate = (present_students / total_students) * 100
-                ax.text(row['授课班级'], row['出勤状态'], f'{total_students}人\n{present_students}人\n{attendance_rate:.2f}%', 
-                        ha='center', va='bottom', fontsize=10)
-
-            # 设置图表标题和标签
-            ax.set_title(f"班级排名 - {date}")
-            ax.set_xlabel('授课班级')
-            ax.set_ylabel('出勤人数')
-
-            # 显示图表
-            st.pyplot(fig)
-
-            # 让用户选择班级查看详细信息
-            selected_class_for_details = st.selectbox(
-                f"选择班级查看详细信息 - {date}", 
-                date_data['授课班级'].unique(),
-                key=f"{date}_class_selectbox"  # 给每个日期的 selectbox 添加唯一的 key
+            # 使用 Plotly 生成柱形图
+            st.subheader(f"班级排名 - {date}")
+            fig = px.bar(
+                date_data, 
+                x='授课班级', 
+                y='出勤状态',
+                title=f"出勤情况 - {date}",
+                labels={'授课班级': '班级', '出勤状态': '出勤人数'},
+                hover_data={'授课班级': True, '出勤状态': True, '排名': True}
             )
 
-            # 获取所选班级的数据
-            selected_class_data = date_data[date_data['授课班级'] == selected_class_for_details]
+            # 显示 Plotly 图表
+            st.plotly_chart(fig)
 
-            # 显示该班级的详细出勤数据
-            total_students = selected_class_data['出勤状态'].sum() + (len(df[df['授课班级'] == selected_class_for_details]) - selected_class_data['出勤状态'].sum())
-            present_students = selected_class_data['出勤状态'].sum()
-            attendance_rate = (present_students / total_students) * 100
+            # 处理柱形图的点击事件显示班级详情
+            clicked_data = st.plotly_chart(fig, use_container_width=True, key=f"bar_{date}")
+            if clicked_data:
+                clicked_class = clicked_data['points'][0]['x']
+                selected_class_data = date_data[date_data['授课班级'] == clicked_class]
 
-            st.write(f"总人数: {total_students}")
-            st.write(f"出勤人数: {present_students}")
-            st.write(f"出勤率: {attendance_rate:.2f}%")
+                # 显示详细信息
+                total_students = len(df[df['授课班级'] == clicked_class])
+                present_students = selected_class_data['出勤状态'].sum()
+                attendance_rate = (present_students / total_students) * 100
+
+                st.write(f"班级: {clicked_class}")
+                st.write(f"总人数: {total_students}")
+                st.write(f"出勤人数: {present_students}")
+                st.write(f"出勤率: {attendance_rate:.2f}%")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
