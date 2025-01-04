@@ -81,9 +81,10 @@ if file_list:
     if selected_teacher != "全部":
         filter_conditions.append(f"教师: {selected_teacher}")
 
-    # 如果有筛选条件，显示它们
+    # 如果有筛选条件，显示它们，每个条件独占一行
     if filter_conditions:
-        st.write("\n".join(filter_conditions))
+        for condition in filter_conditions:
+            st.markdown(f"- {condition}")
     else:
         st.write("未选择任何筛选条件。")
 
