@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 import os
-import matplotlib.pyplot as plt
 
 # 设置页面标题
 st.title("出勤分析")
@@ -148,26 +147,22 @@ if file_list:
             date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
             date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-            # 使用matplotlib绘制柱形图
-            fig, ax = plt.subplots(figsize=(10, 6))
+            # 使用st.bar_chart显示柱形图
+            st.subheader(f"班级排名 - {date}")
+            st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
 
-            # 绘制柱形图
-            ax.barh(date_data['授课班级'], date_data['出勤状态'], color='skyblue')
-
-            # 为每个柱形图上的柱子添加文本（显示“总人数”，“出勤人数”，“出勤率”）
-            for i, (班级, 出勤人数) in enumerate(zip(date_data['授课班级'], date_data['出勤状态'])):
-                total_students = len(df[df['授课班级'] == 班级])
-                attendance_rate = (出勤人数 / total_students) * 100
-                ax.text(出勤人数 + 0.2, i, f"总人数: {total_students}\n出勤人数: {出勤人数}\n出勤率: {attendance_rate:.2f}%", 
-                        va='center', fontsize=10)
-
-            # 设置标题和标签
-            ax.set_title(f"班级排名 - {date}", fontsize=14)
-            ax.set_xlabel('出勤人数', fontsize=12)
-            ax.set_ylabel('授课班级', fontsize=12)
-
-            # 显示图表
-            st.pyplot(fig)
+            # 显示每个班级的出勤数据
+            for index, row in date_data.iterrows():
+                # 获取总人数
+                total_students = len(df[df['授课班级'] == row['授课班级']])
+                # 计算出勤率
+                attendance_rate = (row['出勤状态'] / total_students) * 100
+                # 显示相关信息
+                st.write(f"班级: {row['授课班级']}")
+                st.write(f"总人数: {total_students}")
+                st.write(f"出勤人数: {row['出勤状态']}")
+                st.write(f"出勤率: {attendance_rate:.2f}%")
+                st.write("---")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
