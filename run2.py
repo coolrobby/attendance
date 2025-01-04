@@ -32,17 +32,13 @@ if file_list:
     df['时间'] = df['时间'].fillna(pd.to_datetime('2000-01-01'))
 
     # 提取筛选条件的独特值，并去重（移除 NaN）
-    classes = df['行政班级'].dropna().unique()
     times = df['时间'].dropna().unique()
-    taught_classes = df['授课班级'].dropna().unique()
 
     # 左侧栏位设置为筛选器
     with st.sidebar:
         st.header("筛选条件")
 
-        selected_class = st.selectbox("选择行政班级:", ["全部"] + list(classes))
         selected_time = st.selectbox("选择时间:", ["全部"] + list(times))
-        selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
 
         # 添加班级排名按钮
         show_ranking = st.button("班级排名")
@@ -58,13 +54,9 @@ if file_list:
         st.session_state.show_filters = True
 
     if st.session_state.show_filters:
-        # 根据选择的筛选条件进行过滤
-        if selected_class != "全部":
-            df = df[df['行政班级'] == selected_class]
+        # 根据选择的时间进行过滤
         if selected_time != "全部":
             df = df[df['时间'] == selected_time]
-        if selected_taught_class != "全部":
-            df = df[df['授课班级'] == selected_taught_class]
 
         # 显示数据预览
         st.write("数据预览:")
@@ -84,47 +76,43 @@ if file_list:
         # 对每个日期进行排序，计算每个班级的出勤排名
         attendance_by_class_date['排名'] = attendance_by_class_date.groupby('时间')['出勤状态'].rank(ascending=False, method='min')
 
-        # 获取所有日期的列表
-        all_dates = attendance_by_class_date['时间'].unique()
+        # 如果选择了特定的时间
+        if selected_time != "全部":
+            attendance_by_class_date = attendance_by_class_date[attendance_by_class_date['时间'] == pd.to_datetime(selected_time)]
 
-        # 为每个日期显示排名
-        for date in all_dates:
-            date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
-            date_data = date_data.sort_values(by='出勤状态', ascending=False)
+        # 使用st.bar_chart显示柱形图
+        st.subheader(f"班级排名 - {selected_time}")
+        st.bar_chart(attendance_by_class_date.set_index('授课班级')['出勤状态'])
 
-            # 使用st.bar_chart显示柱形图
-            st.subheader(f"班级排名 - {date}")
-            st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
+        # 显示每个班级的出勤数据
+        for index, row in attendance_by_class_date.iterrows():
+            # 获取该班级的总人数（只在该日期和班级下）
+            total_students = len(df_filtered[(df_filtered['授课班级'] == row['授课班级']) & (df_filtered['时间'] == row['时间'])])
 
-            # 显示每个班级的出勤数据
-            for index, row in date_data.iterrows():
-                # 获取该班级的总人数（只在该日期和班级下）
-                total_students = len(df_filtered[(df_filtered['授课班级'] == row['授课班级']) & (df_filtered['时间'] == date)])
+            # 计算该班级的出勤人数
+            present_students = row['出勤状态']
 
-                # 计算该班级的出勤人数
-                present_students = row['出勤状态']
+            # 计算出勤率
+            attendance_rate = (present_students / total_students) * 100
 
-                # 计算出勤率
-                attendance_rate = (present_students / total_students) * 100
+            # 显示相关信息
+            st.write(f"班级: {row['授课班级']}")
+            st.write(f"总人数: {total_students}")
+            st.write(f"出勤人数: {present_students}")
+            st.write(f"出勤率: {attendance_rate:.2f}%")
 
-                # 显示相关信息
-                st.write(f"班级: {row['授课班级']}")
-                st.write(f"总人数: {total_students}")
-                st.write(f"出勤人数: {present_students}")
-                st.write(f"出勤率: {attendance_rate:.2f}%")
+            # 显示缺勤学生姓名
+            absent_students = df_filtered[(df_filtered['授课班级'] == row['授课班级']) & 
+                                          (df_filtered['时间'] == row['时间']) & 
+                                          (df_filtered['出勤状态'] == '缺勤')]
 
-                # 显示缺勤学生姓名
-                absent_students = df_filtered[(df_filtered['授课班级'] == row['授课班级']) & 
-                                              (df_filtered['时间'] == date) & 
-                                              (df_filtered['出勤状态'] == '缺勤')]
+            if not absent_students.empty:
+                absent_names = absent_students['姓名'].tolist()
+                st.write("缺勤学生: " + ", ".join(absent_names))
+            else:
+                st.write("没有缺勤学生。")
 
-                if not absent_students.empty:
-                    absent_names = absent_students['姓名'].tolist()
-                    st.write("缺勤学生: " + ", ".join(absent_names))
-                else:
-                    st.write("没有缺勤学生。")
-
-                st.write("---")
+            st.write("---")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
