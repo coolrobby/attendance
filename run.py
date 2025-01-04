@@ -152,7 +152,11 @@ if file_list:
             st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
 
             # 让用户选择班级查看详细信息
-            selected_class_for_details = st.selectbox("选择班级查看详细信息", date_data['授课班级'].unique())
+            selected_class_for_details = st.selectbox(
+                f"选择班级查看详细信息 - {date}", 
+                date_data['授课班级'].unique(),
+                key=f"{date}_class_selectbox"  # 给每个日期的 selectbox 添加唯一的 key
+            )
 
             # 获取所选班级的数据
             selected_class_data = date_data[date_data['授课班级'] == selected_class_for_details]
