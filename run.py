@@ -156,6 +156,3 @@ else:
 
     except Exception as e:
         st.error(f"读取文件时发生错误: {str(e)}")
-
-else:
-    st.error("当前目录下没有找到任何xlsx文件。")
