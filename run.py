@@ -1,7 +1,6 @@
 import pandas as pd
 import streamlit as st
 import os
-import matplotlib.pyplot as plt
 
 # 设置页面标题
 st.title("出勤分析")
@@ -50,12 +49,12 @@ if file_list:
         selected_taught_class = st.selectbox("选择授课班级:", ["全部"] + list(taught_classes))
         selected_teacher = st.selectbox("选择教师:", ["全部"] + list(teachers))
 
-        # 添加班级分析按钮
-        show_ranking = st.button("班级分析")
+        # 添加班级排名按钮
+        show_ranking = st.button("班级排名")
 
     # 处理按钮点击
     if show_ranking:
-        # 切换到班级分析显示
+        # 切换到班级排名显示
         st.session_state.show_ranking = True
         st.session_state.show_filters = False
     else:
@@ -84,7 +83,52 @@ if file_list:
         st.write("数据预览:")
         st.dataframe(df)
 
-    # 如果点击了“班级分析”按钮，显示班级排名柱形图
+        # 显示筛选条件
+        st.subheader("当前筛选条件:")
+        filter_conditions = []
+
+        if selected_department != "全部":
+            filter_conditions.append(f"院系: {selected_department}")
+        if selected_major != "全部":
+            filter_conditions.append(f"专业: {selected_major}")
+        if selected_class != "全部":
+            filter_conditions.append(f"行政班级: {selected_class}")
+        if selected_time != "全部":
+            filter_conditions.append(f"时间: {selected_time}")
+        if selected_course != "全部":
+            filter_conditions.append(f"课程: {selected_course}")
+        if selected_taught_class != "全部":
+            filter_conditions.append(f"授课班级: {selected_taught_class}")
+        if selected_teacher != "全部":
+            filter_conditions.append(f"教师: {selected_teacher}")
+
+        # 如果有筛选条件，显示它们，每个条件独占一行
+        if filter_conditions:
+            for condition in filter_conditions:
+                st.markdown(f"- {condition}")
+        else:
+            st.write("未选择任何筛选条件。")
+
+        # 统计“签到状态”字段的不同值所占百分比
+        if '签到状态' in df.columns:
+            attendance_counts = df['签到状态'].value_counts()
+            total_count = attendance_counts.sum()
+            attendance_percentage = (attendance_counts / total_count) * 100
+
+            # 显示统计结果
+            st.subheader("签到状态的百分比统计:")
+            
+            # 显示总人数
+            st.write(f"总人数: {total_count}")
+
+            # 显示各个值的人数和百分比
+            for status, count in attendance_counts.items():
+                percentage = attendance_percentage[status]
+                st.write(f"{status}: {count} 人，占 {percentage:.2f}%")
+        else:
+            st.error("数据中没有 '签到状态' 字段。")
+
+    # 如果点击了“班级排名”按钮，显示班级排名柱形图
     if st.session_state.show_ranking:
         # 将签到状态“已签”和“教师代签”视为出勤，其他为缺勤
         df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
@@ -103,26 +147,28 @@ if file_list:
             date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
             date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-            # 使用matplotlib绘制柱形图
-            fig, ax = plt.subplots(figsize=(10, 6))
+            # 使用柱形图显示排名
+            st.subheader(f"班级排名 - {date}")
+            st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
 
-            # 绘制柱形图
-            ax.barh(date_data['授课班级'], date_data['出勤状态'], color='skyblue')
+            # 让用户选择班级查看详细信息
+            selected_class_for_details = st.selectbox(
+                f"选择班级查看详细信息 - {date}", 
+                date_data['授课班级'].unique(),
+                key=f"{date}_class_selectbox"  # 给每个日期的 selectbox 添加唯一的 key
+            )
 
-            # 为每个柱形图上的柱子添加文本（显示“总人数”，“出勤人数”，“出勤率”）
-            for i, (班级, 出勤人数) in enumerate(zip(date_data['授课班级'], date_data['出勤状态'])):
-                total_students = len(df[df['授课班级'] == 班级])
-                attendance_rate = (出勤人数 / total_students) * 100
-                ax.text(出勤人数 + 0.2, i, f"总人数: {total_students}\n出勤人数: {出勤人数}\n出勤率: {attendance_rate:.2f}%", 
-                        va='center', fontsize=10)
+            # 获取所选班级的数据
+            selected_class_data = date_data[date_data['授课班级'] == selected_class_for_details]
 
-            # 设置标题和标签
-            ax.set_title(f"班级排名 - {date}", fontsize=14)
-            ax.set_xlabel('出勤人数', fontsize=12)
-            ax.set_ylabel('授课班级', fontsize=12)
+            # 显示该班级的详细出勤数据
+            total_students = selected_class_data['出勤状态'].sum() + (len(df[df['授课班级'] == selected_class_for_details]) - selected_class_data['出勤状态'].sum())
+            present_students = selected_class_data['出勤状态'].sum()
+            attendance_rate = (present_students / total_students) * 100
 
-            # 显示图表
-            st.pyplot(fig)
+            st.write(f"总人数: {total_students}")
+            st.write(f"出勤人数: {present_students}")
+            st.write(f"出勤率: {attendance_rate:.2f}%")
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
