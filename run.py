@@ -51,16 +51,24 @@ if file_list:
 
         # 添加班级排名按钮
         show_ranking = st.button("班级排名")
+        show_report2 = st.button("报表2")  # 新增按钮报表2
 
     # 处理按钮点击
     if show_ranking:
         # 切换到班级排名显示
         st.session_state.show_ranking = True
         st.session_state.show_filters = False
+    elif show_report2:
+        # 切换到报表2显示
+        st.session_state.show_ranking = False
+        st.session_state.show_filters = False
+        # 生成报表2
+        st.session_state.show_report2 = True
     else:
         # 默认显示筛选器
         st.session_state.show_ranking = False
         st.session_state.show_filters = True
+        st.session_state.show_report2 = False
 
     if st.session_state.show_filters:
         # 根据选择的筛选条件进行过滤
@@ -170,19 +178,23 @@ if file_list:
                 st.write(f"总人数: {total_students}")
                 st.write(f"出勤人数: {present_students}")
                 st.write(f"出勤率: {attendance_rate:.2f}%")
-
-                # 显示缺勤学生姓名
-                absent_students = df_filtered[(df_filtered['授课班级'] == row['授课班级']) & 
-                                              (df_filtered['时间'] == date) & 
-                                              (df_filtered['出勤状态'] == '缺勤')]
-
-                if not absent_students.empty:
-                    absent_names = absent_students['姓名'].tolist()
-                    st.write("缺勤学生: " + ", ".join(absent_names))
-                else:
-                    st.write("没有缺勤学生。")
-
                 st.write("---")
+
+    # 如果点击了“报表2”按钮，显示出勤率表格
+    if st.session_state.show_report2:
+        # 计算每个班级在每个日期的出勤率
+        df['出勤状态'] = df['签到状态'].apply(lambda x: '出勤' if x in ['已签', '教师代签'] else '缺勤')
+        df_filtered = df[df['时间'] != pd.to_datetime('2000-01-01')]
+
+        # 计算每个班级的出勤率
+        attendance_by_class = df_filtered.groupby(['时间', '授课班级'])['出勤状态'].apply(lambda x: (x == '出勤').sum() / len(x) * 100).reset_index()
+
+        # 按时间和出勤率降序排列
+        attendance_by_class = attendance_by_class.sort_values(by=['时间', '出勤状态'], ascending=[True, False])
+
+        # 显示报表2
+        st.subheader("出勤率报表2")
+        st.dataframe(attendance_by_class)
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
