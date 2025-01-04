@@ -18,7 +18,10 @@ if file_list:
     # 清理列名，去除可能的空格
     df.columns = df.columns.str.strip()
 
-    # 提取筛选条件的独特值
+    # 去除含有空值的行，防止筛选错误
+    df = df.dropna(subset=['院系', '专业', '行政班级', '时间', '课程', '授课班级', '教师', '签到状态'])
+
+    # 提取筛选条件的独特值，并去重
     departments = df['院系'].unique()
     majors = df['专业'].unique()
     classes = df['行政班级'].unique()
