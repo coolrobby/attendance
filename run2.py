@@ -76,8 +76,8 @@ if file_list:
                 "缺勤学生": absent_names_str
             })
 
-        # 显示表格
-        st.table(table_data)
+        # 显示表格，按出勤率降序排列
+        st.table(pd.DataFrame(table_data).sort_values(by='出勤率', ascending=False))
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
