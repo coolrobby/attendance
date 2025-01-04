@@ -153,14 +153,19 @@ if file_list:
 
             # 显示每个班级的出勤数据
             for index, row in date_data.iterrows():
-                # 获取总人数
-                total_students = len(df[df['授课班级'] == row['授课班级']])
+                # 获取该班级的总人数（只在该日期和班级下）
+                total_students = len(df[(df['授课班级'] == row['授课班级']) & (df['时间'] == date)])
+
+                # 计算该班级的出勤人数
+                present_students = row['出勤状态']
+
                 # 计算出勤率
-                attendance_rate = (row['出勤状态'] / total_students) * 100
+                attendance_rate = (present_students / total_students) * 100
+
                 # 显示相关信息
                 st.write(f"班级: {row['授课班级']}")
                 st.write(f"总人数: {total_students}")
-                st.write(f"出勤人数: {row['出勤状态']}")
+                st.write(f"出勤人数: {present_students}")
                 st.write(f"出勤率: {attendance_rate:.2f}%")
                 st.write("---")
 
