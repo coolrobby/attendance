@@ -151,5 +151,20 @@ if file_list:
             st.subheader(f"班级排名 - {date}")
             st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
 
+            # 让用户选择班级查看详细信息
+            selected_class_for_details = st.selectbox("选择班级查看详细信息", date_data['授课班级'].unique())
+
+            # 获取所选班级的数据
+            selected_class_data = date_data[date_data['授课班级'] == selected_class_for_details]
+
+            # 显示该班级的详细出勤数据
+            total_students = selected_class_data['出勤状态'].sum() + (len(df[df['授课班级'] == selected_class_for_details]) - selected_class_data['出勤状态'].sum())
+            present_students = selected_class_data['出勤状态'].sum()
+            attendance_rate = (present_students / total_students) * 100
+
+            st.write(f"总人数: {total_students}")
+            st.write(f"出勤人数: {present_students}")
+            st.write(f"出勤率: {attendance_rate:.2f}%")
+
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
