@@ -56,7 +56,13 @@ if file_list:
     if st.session_state.show_filters:
         # 根据选择的时间进行过滤
         if selected_time != "全部":
-            df = df[df['时间'] == selected_time]
+            try:
+                # 尝试将 selected_time 转换为 datetime
+                selected_time = pd.to_datetime(selected_time)
+                df = df[df['时间'] == selected_time]
+            except Exception as e:
+                st.error(f"无法解析时间: {selected_time}. 错误详情: {str(e)}")
+                df = pd.DataFrame()  # 如果转换失败，清空数据
 
         # 显示数据预览
         st.write("数据预览:")
@@ -78,7 +84,7 @@ if file_list:
 
         # 如果选择了特定的时间
         if selected_time != "全部":
-            attendance_by_class_date = attendance_by_class_date[attendance_by_class_date['时间'] == pd.to_datetime(selected_time)]
+            attendance_by_class_date = attendance_by_class_date[attendance_by_class_date['时间'] == selected_time]
 
         # 使用st.bar_chart显示柱形图
         st.subheader(f"班级排名 - {selected_time}")
