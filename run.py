@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
+import matplotlib.pyplot as plt
 
 # 设置页面标题
 st.title("出勤分析")
@@ -147,9 +148,27 @@ if file_list:
             date_data = attendance_by_class_date[attendance_by_class_date['时间'] == date]
             date_data = date_data.sort_values(by='出勤状态', ascending=False)
 
-            # 使用柱形图显示排名
-            st.subheader(f"班级排名 - {date}")
-            st.bar_chart(date_data.set_index('授课班级')['出勤状态'])
+            # 使用matplotlib绘制柱形图并在每根柱上显示文本
+            fig, ax = plt.subplots()
+
+            # 绘制柱形图
+            ax.bar(date_data['授课班级'], date_data['出勤状态'], color='skyblue')
+
+            # 在每根柱子上添加文本标签
+            for i, row in date_data.iterrows():
+                total_students = len(df[df['授课班级'] == row['授课班级']])
+                present_students = row['出勤状态']
+                attendance_rate = (present_students / total_students) * 100
+                ax.text(row['授课班级'], row['出勤状态'], f'{total_students}人\n{present_students}人\n{attendance_rate:.2f}%', 
+                        ha='center', va='bottom', fontsize=10)
+
+            # 设置图表标题和标签
+            ax.set_title(f"班级排名 - {date}")
+            ax.set_xlabel('授课班级')
+            ax.set_ylabel('出勤人数')
+
+            # 显示图表
+            st.pyplot(fig)
 
             # 让用户选择班级查看详细信息
             selected_class_for_details = st.selectbox(
