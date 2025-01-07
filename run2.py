@@ -40,8 +40,11 @@ if file_list:
     # 计算出勤率
     attendance_by_class_date['出勤率'] = (attendance_by_class_date['出勤状态'] / attendance_by_class_date['总人数']) * 100
 
-    # 对每个日期进行排序，按出勤率降序排列
-    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by='出勤率', ascending=False)
+    # 创建一个新的列，确保出勤率为 100% 的班级排在前面
+    attendance_by_class_date['排序出勤率'] = attendance_by_class_date['出勤率'].apply(lambda x: -1 if x == 100 else x)
+
+    # 对每个日期进行排序，首先按出勤率为 100% 排序，再按出勤率降序排列
+    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by=['排序出勤率', '出勤率'], ascending=[True, False])
 
     # 获取所有日期的列表
     all_dates = attendance_by_class_date_sorted['时间'].unique()
