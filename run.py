@@ -3,7 +3,7 @@ import streamlit as st
 import os
 
 # 设置页面标题
-st.title("出勤分析")
+st.title("出勤详情")
 
 # 自动读取当前目录下所有的xlsx文件
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
