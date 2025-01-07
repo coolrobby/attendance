@@ -3,7 +3,7 @@ import streamlit as st
 import os
 
 # 设置页面标题
-st.title("班级排名分析")
+st.title("出勤率汇总")
 
 # 自动读取当前目录下所有的xlsx文件
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
@@ -40,8 +40,8 @@ if file_list:
     # 计算出勤率
     attendance_by_class_date['出勤率'] = (attendance_by_class_date['出勤状态'] / attendance_by_class_date['总人数']) * 100
 
-    # 对每个日期进行排序，计算每个班级的出勤排名（按出勤率降序排列）
-    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by='出勤率', ascending=False)
+    # 对每个日期进行排序，计算每个班级的出勤排名（按出勤率升序排列）
+    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by='出勤率', ascending=True)
 
     # 获取所有日期的列表
     all_dates = attendance_by_class_date_sorted['时间'].unique()
@@ -50,8 +50,8 @@ if file_list:
     for date in all_dates:
         date_data = attendance_by_class_date_sorted[attendance_by_class_date_sorted['时间'] == date]
 
-        # 显示柱形图，按照出勤率排序
-        st.subheader(f"班级排名 - {date}")
+        # 显示柱形图，按照出勤率升序排序
+        st.subheader(f"出勤率 - {date}")
         st.bar_chart(date_data.set_index('授课班级')['出勤率'])
 
         # 构建每个班级的信息表格
@@ -76,8 +76,8 @@ if file_list:
                 "缺勤学生": absent_names_str
             })
 
-        # 显示表格，按出勤率降序排列
-        st.table(pd.DataFrame(table_data).sort_values(by='出勤率', ascending=False))
+        # 显示表格，按出勤率升序排列
+        st.table(pd.DataFrame(table_data).sort_values(by='出勤率', ascending=True))
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
