@@ -40,11 +40,8 @@ if file_list:
     # 计算出勤率
     attendance_by_class_date['出勤率'] = (attendance_by_class_date['出勤状态'] / attendance_by_class_date['总人数']) * 100
 
-    # 创建一个新的列来处理出勤率为 100% 的情况，将其设置为一个非常大的值（比如 101），确保它们排在最后
-    attendance_by_class_date['排序出勤率'] = attendance_by_class_date['出勤率'].apply(lambda x: 101 if x == 100 else x)
-
-    # 对每个日期进行排序，计算每个班级的出勤排名（按出勤率升序排列，但将出勤率为 100% 的排在最后）
-    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by='排序出勤率', ascending=True)
+    # 对每个日期进行排序，按出勤率降序排列
+    attendance_by_class_date_sorted = attendance_by_class_date.sort_values(by='出勤率', ascending=False)
 
     # 获取所有日期的列表
     all_dates = attendance_by_class_date_sorted['时间'].unique()
@@ -53,7 +50,7 @@ if file_list:
     for date in all_dates:
         date_data = attendance_by_class_date_sorted[attendance_by_class_date_sorted['时间'] == date]
 
-        # 显示柱形图，按照出勤率升序排序
+        # 显示柱形图，按照出勤率降序排序
         st.subheader(f"班级排名 - {date}")
         st.bar_chart(date_data.set_index('授课班级')['出勤率'])
 
@@ -79,8 +76,8 @@ if file_list:
                 "缺勤学生": absent_names_str
             })
 
-        # 显示表格，按出勤率升序排列
-        st.table(pd.DataFrame(table_data).sort_values(by='出勤率', ascending=True))
+        # 显示表格，按出勤率降序排列
+        st.table(pd.DataFrame(table_data).sort_values(by='出勤率', ascending=False))
 
 else:
     st.error("当前目录下没有找到任何xlsx文件。")
