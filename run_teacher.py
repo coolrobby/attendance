@@ -3,7 +3,7 @@ import streamlit as st
 import os
 
 # 设置页面标题
-st.title("教师排名分析")
+st.title("考勤-教师维度")
 
 # 自动读取当前目录下所有的xlsx文件
 file_list = [f for f in os.listdir() if f.endswith('.xlsx')]
@@ -54,7 +54,7 @@ if file_list:
         date_data = attendance_by_teacher_date_sorted[attendance_by_teacher_date_sorted['时间'] == date]
 
         # 显示柱形图，按照出勤率降序排序
-        st.subheader(f"教师排名 - {date}")
+        st.subheader(f"考勤日期 - {date}")
         st.bar_chart(date_data.set_index('教师')['出勤率'])
 
         # 构建每个教师的信息表格
